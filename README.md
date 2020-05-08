@@ -7,13 +7,23 @@ Quick Start
 -----------
 
 ```sh
+bundle                   # install dependencies
+./test-single-server.rb  # run test against single server
+```
+
+Running the server manually
+---------------------------
+
+To see how the server behaves without any of the test scripts, you can run it manually:
+
+```sh
 bundle    # install dependencies
 ./app.rb  # run the server
 ```
 
+Now, in a separate terminal, request an "echo". You'l get an answer after a short delay:
+
 ```
-$ # In a separate terminal, request an echo
-$ # You'll get an answer after a short delay
 $ curl 'http://localhost:4567/wait-and-echo?content=content%20to%20echo'
 ECHO: content to echo
 ```
