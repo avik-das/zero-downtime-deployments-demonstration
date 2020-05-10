@@ -1,5 +1,5 @@
-Sinatra Graceful Shutdown
-=========================
+Zero-downtime deployments demonstration
+=======================================
 
 A sample server and testing utilities to demonstrate graceful shutdowns and zero-downtime deployments.
 
