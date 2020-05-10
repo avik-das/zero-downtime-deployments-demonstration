@@ -3,6 +3,8 @@ Sinatra Graceful Shutdown
 
 A sample server and testing utilities to demonstrate graceful shutdowns and zero-downtime deployments.
 
+Note: in the future, I will write a blog post about this, which I'll link from here.
+
 Quick Start
 -----------
 
