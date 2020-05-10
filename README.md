@@ -24,6 +24,10 @@ To see how the server behaves without any of the test scripts, you can run it ma
 ```sh
 bundle    # install dependencies
 ./app.rb  # run the server
+
+# Or run with the UPDATED environment variable in order to simulate an updated
+# version of the code:
+UPDATED=Y ./app.rb
 ```
 
 Now, in a separate terminal, request an "echo". You'l get an answer after a short delay:

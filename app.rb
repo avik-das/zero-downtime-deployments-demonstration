@@ -2,6 +2,11 @@
 
 require 'sinatra'
 
+ECHO_PREFIX =
+  if ENV['UPDATED'] == 'Y' then 'ECHO (updated)'
+  else 'ECHO'
+  end
+
 get '/health' do status(204) end
 
 get '/wait-and-echo' do
@@ -9,5 +14,5 @@ get '/wait-and-echo' do
   sleep(2)
 
   status(200)
-  "ECHO: #{content}"
+  "#{ECHO_PREFIX}: #{content}"
 end

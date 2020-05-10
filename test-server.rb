@@ -15,10 +15,14 @@ class RunningServer
   class AppServer
     def initialize(port)
       @port = port
-      @pid = spawn(
-        RbConfig.ruby, 'app.rb', '-p', port.to_s,
-        [:out, :err] => 'out.log'
-      )
+      launch
+    end
+
+    def relaunch
+      shutdown
+      sleep(2)
+
+      launch({ 'UPDATED' => 'Y' })
     end
 
     def shutdown
@@ -26,6 +30,16 @@ class RunningServer
     end
 
     attr_reader :port
+
+  private
+
+    def launch(env = {})
+      @pid = spawn(
+        env,
+        RbConfig.ruby, 'app.rb', '-p', port.to_s,
+        [:out, :err] => 'out.log'
+      )
+    end
   end
 
   def initialize(mode)
@@ -45,12 +59,7 @@ class RunningServer
 
   def relaunch_app_servers
     Thread.new {
-      @app_servers = @app_servers.map { |app|
-        app.shutdown
-        sleep(5)
-
-        AppServer.new(app.port)
-      }
+      @app_servers.each do |app| app.relaunch end
     }
   end
 
