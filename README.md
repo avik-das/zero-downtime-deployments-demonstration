@@ -27,3 +27,11 @@ Now, in a separate terminal, request an "echo". You'l get an answer after a shor
 $ curl 'http://localhost:4567/wait-and-echo?content=content%20to%20echo'
 ECHO: content to echo
 ```
+
+Or, run the health check:
+
+```
+$ curl -i 'http://localhost:4567/health'
+HTTP/1.1 204 No Content
+<headers omitted>
+```
