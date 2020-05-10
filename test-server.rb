@@ -143,7 +143,7 @@ COLOR_SUCCESS = 3
 COLOR_ERROR   = 4
 
 WIDTH_COL_0 = 3
-WIDTH_COL_1 = 32
+WIDTH_COL_1 = 48
 WIDTH_COL_2 = 'Duration (ms)'.length
 COL_PADDING = ' '
 COL_SEPARATOR = '│'

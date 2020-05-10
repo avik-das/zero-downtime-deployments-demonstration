@@ -14,5 +14,5 @@ get '/wait-and-echo' do
   sleep(2)
 
   status(200)
-  "#{ECHO_PREFIX}: #{content}"
+  "#{ECHO_PREFIX} from #{settings.port}: #{content}"
 end
