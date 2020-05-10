@@ -20,9 +20,10 @@ class RunningServer
 
     def relaunch
       shutdown
-      sleep(2)
+      sleep(1)
 
       launch({ 'UPDATED' => 'Y' })
+      sleep(1)
     end
 
     def shutdown
