@@ -1,0 +1,7 @@
+:4565 {
+    reverse_proxy localhost:4567 localhost:4568 {
+        health_path /health
+        health_status 2xx
+        health_interval 10ms
+    }
+}

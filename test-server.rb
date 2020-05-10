@@ -1,9 +1,72 @@
 #!/usr/bin/env ruby
 
 require 'curses'
+require 'docopt'
 require 'net/http'
 
 include Curses
+
+## SERVER STARTING ############################################################
+
+class RunningServer
+  SERVER_MODE_SINGLE = :single
+  SERVER_MODE_LOAD_BALANCED = :load_balanced
+
+  class AppServer
+    def initialize(port)
+      @port = port
+      @pid = spawn(
+        RbConfig.ruby, 'app.rb', '-p', port.to_s,
+        [:out, :err] => 'out.log'
+      )
+    end
+
+    def shutdown
+      Process.kill('TERM', @pid)
+    end
+
+    attr_reader :port
+  end
+
+  def initialize(mode)
+    case mode
+      when SERVER_MODE_SINGLE
+        @app_servers = [AppServer.new(4567)]
+        @pid_caddy = nil
+        @port = 4567
+      when SERVER_MODE_LOAD_BALANCED
+        @app_servers = [4567, 4568].map { |port| AppServer.new(port) }
+        sleep(1)
+
+        @pid_caddy = spawn('caddy', 'run', [:out, :err] => 'out.log')
+        @port = 4565
+      end
+  end
+
+  def relaunch_app_servers
+    Thread.new {
+      @app_servers = @app_servers.map { |app|
+        app.shutdown
+        sleep(5)
+
+        AppServer.new(app.port)
+      }
+    }
+  end
+
+  def shutdown
+    @app_servers.each(&:shutdown)
+    Process.kill('TERM', @pid_caddy) unless @pid_caddy.nil?
+  end
+
+  attr_reader :port
+
+private
+
+  def run_app_server_on_port(port)
+    spawn(RbConfig.ruby, 'app.rb', '-p', port,  [:out, :err] => 'out.log')
+  end
+end
 
 ## DATA + BEHAVIOR ############################################################
 
@@ -12,13 +75,13 @@ class Request
   STATE_SUCCESS = 2
   STATE_ERROR   = 3
 
-  def initialize(num)
+  def initialize(num, port)
     @num = num
     @state = STATE_WAITING
 
     start = Time.now
     Thread.new {
-      uri = URI('http://localhost:4567/wait-and-echo')
+      uri = URI("http://localhost:#{port}/wait-and-echo")
       uri.query = URI.encode_www_form({ content: "Request #{@num}" })
 
       begin
@@ -49,16 +112,14 @@ NUM_REQUESTS_BEFORE_SHUTDOWN = 20
 TOTAL_REQUESTS = 40
 
 REQUESTS = []
-SERVER_PID = spawn(RbConfig.ruby, 'app.rb', [:out, :err] => 'out.log')
-sleep(1)
 
-def run_requests
+def run_requests(server)
   begin
     TOTAL_REQUESTS.times do |i|
       sleep(REQUEST_INTERVAL_MS / 1000.0)
-      REQUESTS << Request.new(i)
+      REQUESTS << Request.new(i, server.port)
 
-      Process.kill('TERM', SERVER_PID) \
+      server.relaunch_app_servers \
         if i == (NUM_REQUESTS_BEFORE_SHUTDOWN - 1)
     end
   end
@@ -117,6 +178,32 @@ HEADER_ROW_SEPARATOR =
   '┿' +
   '━' * (COL_PADDING.size + WIDTH_COL_2 + COL_PADDING.size)
 
+## COMMAND LINE HANDLING ######################################################
+
+doc = <<USAGE
+Graceful shutdown test
+
+Usage:
+  #{__FILE__} single
+  #{__FILE__} load-balanced
+
+Options:
+  -h --help     Show this screen.
+  --version     Show version.
+USAGE
+
+begin
+  args = Docopt::docopt(doc)
+  mode =
+    if args['single'] then RunningServer::SERVER_MODE_SINGLE
+    elsif args['load-balanced'] then RunningServer::SERVER_MODE_LOAD_BALANCED
+    else raise 'Not sure which mode to start server in'
+    end
+rescue Docopt::Exit => e
+  puts e.message
+  exit(1)
+end
+
 ## UI INITIALIZATION ##########################################################
 
 init_screen
@@ -132,11 +219,14 @@ init_pair(COLOR_ERROR  , COLOR_RED   , COLOR_BLACK)
 
 ## MAIN LOOP ##################################################################
 
+server = RunningServer.new(mode)
+sleep(1)
+
 begin
   win = Curses::Window.new(0, 0, 1, 2)
   win.timeout = 100
 
-  Thread.new { run_requests }
+  Thread.new { run_requests(server) }
 
   loop do
     win.setpos(0,0)
@@ -199,5 +289,5 @@ begin
   end
 ensure
   close_screen
-  Process.kill('TERM', SERVER_PID)
+  server.shutdown
 end

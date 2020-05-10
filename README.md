@@ -6,9 +6,14 @@ A sample server and testing utilities to demonstrate graceful shutdowns and zero
 Quick Start
 -----------
 
+[Download and install the Caddy 2 web server.](https://caddyserver.com/docs/download)
+
 ```sh
-bundle                   # install dependencies
-./test-single-server.rb  # run test against single server
+caddy stop  # ensure Caddy is not running already
+
+bundle                          # install dependencies
+./test-server.rb single         # test against single server
+./test-server.rb load-balanced  # test against multiple load-balanced servers
 ```
 
 Running the server manually
